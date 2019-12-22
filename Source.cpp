@@ -39,6 +39,38 @@ boolean rowsLegal(game* cur) {
 	}
 }
 
+boolean Legal(game* cur) {
+	boolean legal = TRUE;
+	boolean moneR[SIZE],moneC[SIZE];
+
+
+	for (int i = 0; i < SIZE; i++) {
+		for (int k = 0; k < SIZE; k++) {//initialize
+			moneR[k] = FALSE;
+			moneC[k] = FALSE;
+		}
+		for (int j = 0; j < SIZE; j++) {
+			if (moneR[cur->board[i][j] - 1]|| moneC[cur->board[j][i] - 1]) {
+				return FALSE;
+			}
+
+			moneR[cur->board[i][j] - 1] = TRUE;
+			moneC[cur->board[j][i] - 1] = TRUE;
+
+		}
+	}
+}
+void readBoard(char * path, game* cur) {
+	FILE*  file =fopen(path, "rb");
+	for (int i = 0; i < SIZE; i++) {
+		for (int j = 0; j < SIZE; j++) {
+			fread(&(cur->board[i][j]), sizeof(BYTE), 1, file);//read the value into the board
+			fseek(file, 1, SEEK_CUR);//skip the comma
+		}
+	}
+	fclose(file);
+}
+
 int main() {
 	game* c = (pgame)malloc(sizeof(game));
 	printf("%d\n", rowsLegal(c));
