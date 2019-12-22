@@ -19,6 +19,12 @@ typedef struct game {
 	};
 	//TODO: change intialization to loop
 }*pgame;
+
+typedef struct pos {
+	int x;
+	int y;
+	boolean last;
+}pos;
 boolean legal(game* cur) {
 	boolean legal = TRUE;
 	boolean moneR[SIZE], moneC[SIZE];
@@ -45,6 +51,7 @@ boolean legal(game* cur) {
 	}
 	return TRUE;
 }
+
 boolean squares(game* cur) {
 	boolean mone[SIZE];
 	for (int i = 0; i < SIZE; i += 3) {
@@ -65,6 +72,7 @@ boolean squares(game* cur) {
 	}
 	return TRUE;
 }
+
 void readBoard(char * path, game* cur) {
 	FILE*  file = fopen(path, "rb");
 	for (int i = 0; i < SIZE; i++) {
@@ -76,7 +84,8 @@ void readBoard(char * path, game* cur) {
 	}
 	fclose(file);
 
-	//cur->board[2][3] = 5;
+	//cur->board[2][3] = 0;
+	//cur->board[3][2] = 0;
 }
 
 void printBoard(game* cur) {
@@ -102,9 +111,50 @@ void printBoard(game* cur) {
 	printf("-\n");
 }
 
+pos* getEmpty(game* cur) {
+	pos* locations = (pos*)malloc(sizeof(pos));;
+	int length = 0;
+	for (int i = 0; i < SIZE; i++) {
+		for (int j = 0; j < SIZE; j++) {
+			if (cur->board[i][j] == 0) {
+				if (!length) {
+					locations[length].x = i;
+					locations[length].y = j;
+					locations[length].last = FALSE;
+					length++;
+
+				}
+				else {
+					locations = (pos*)realloc(locations, sizeof(pos)*(++length));
+					locations[length - 1].x = i;
+					locations[length - 1].y = j;
+					locations[length-1].last = FALSE;
+				}
+			}
+		}
+	}
+	locations[length - 1].last = TRUE;
+	if (length)
+		return locations;
+	else {
+		free(locations);
+		return NULL;
+	}
+}
+
 int main() {
 	game* c = (pgame)malloc(sizeof(game));
 	readBoard("board.txt", c);
 	printBoard(c);
-	printf("%d\n", squares(c));
+	pos* locations = getEmpty(c);
+	pos *loc = locations;
+	while (locations)
+	{
+		printf("%d %d\n", (*loc).x, (*loc).y);
+		if (loc->last)
+			break;
+		loc++;
+		
+	}
+	//printf("%d\n", squares(c));
 }
