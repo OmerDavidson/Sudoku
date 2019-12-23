@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #define SIZE 9
 
+int cnt = 0;
+
 typedef char BYTE;
 typedef enum { FALSE, TRUE } boolean;
 typedef struct game {
@@ -17,15 +19,14 @@ typedef struct game {
 		{ 1,2,4,5,3,8,9,6,7 },
 		{ 1,2,4,5,3,8,9,6,7 },
 	};
-	//TODO: change intialization to loop
 }*pgame;
-
 typedef struct pos {
 	int x;
 	int y;
 	boolean last;
 }pos;
-boolean legal(game* cur) {
+
+boolean rowsCols(game* cur) {
 	boolean legal = TRUE;
 	boolean moneR[SIZE], moneC[SIZE];
 
@@ -73,8 +74,15 @@ boolean squares(game* cur) {
 	return TRUE;
 }
 
-void readBoard(char * path, game* cur) {
-	FILE*  file = fopen(path, "rb");
+boolean legal(game* cur) {
+	if (rowsCols(cur) && squares(cur))
+		return TRUE;
+	else
+		return FALSE;
+}
+
+void readBoard(const char* path, game* cur) {
+	FILE* file = fopen(path, "rb");
 	for (int i = 0; i < SIZE; i++) {
 		for (int j = 0; j < SIZE; j++) {
 			fread(&(cur->board[i][j]), sizeof(BYTE), 1, file);//read the value into the board
@@ -83,9 +91,6 @@ void readBoard(char * path, game* cur) {
 		}
 	}
 	fclose(file);
-
-	//cur->board[2][3] = 0;
-	//cur->board[3][2] = 0;
 }
 
 void printBoard(game* cur) {
@@ -112,7 +117,7 @@ void printBoard(game* cur) {
 }
 
 pos* getEmpty(game* cur) {
-	pos* locations = (pos*)malloc(sizeof(pos));;
+	pos* locations = (pos*)malloc(sizeof(pos));
 	int length = 0;
 	for (int i = 0; i < SIZE; i++) {
 		for (int j = 0; j < SIZE; j++) {
@@ -125,10 +130,10 @@ pos* getEmpty(game* cur) {
 
 				}
 				else {
-					locations = (pos*)realloc(locations, sizeof(pos)*(++length));
+					locations = (pos*)realloc(locations, sizeof(pos) * (++length));
 					locations[length - 1].x = i;
 					locations[length - 1].y = j;
-					locations[length-1].last = FALSE;
+					locations[length - 1].last = FALSE;
 				}
 			}
 		}
@@ -137,24 +142,61 @@ pos* getEmpty(game* cur) {
 	if (length)
 		return locations;
 	else {
-		free(locations);
-		return NULL;
+		//free(locations);
+		return 0;
 	}
+}
+
+pos* getZero(game* cur) {
+	for (int i = 0; i < SIZE; i++) {
+		for (int j = 0; j < SIZE; j++) {
+			if (cur->board[i][j] == 0) {
+				pos* ret = (pos*)malloc(sizeof(pos));
+				ret->x = i;
+				ret->y = j;
+				return ret;
+			}
+		}
+	}
+	return NULL;
+}
+
+boolean endGame(game* cur) {
+	if (!getEmpty(cur) && legal(cur))
+		return TRUE;
+	else
+		return FALSE;
+
+}
+
+boolean solve(game* cur) {
+	cnt++;
+	if (!legal(cur)) {
+		return FALSE;
+	}
+	pos* locations = getZero(cur);
+	if (!locations) {
+		return TRUE;
+	}
+	//go through all possible positions
+	for (int i = 0; i < SIZE; i++) {
+		cur->board[locations->x][locations->y] = i + 1;
+		if (solve(cur)) {
+			return TRUE;
+		}
+	}
+	cur->board[locations->x][locations->y] = 0;
+	return FALSE;
 }
 
 int main() {
 	game* c = (pgame)malloc(sizeof(game));
-	readBoard("board.txt", c);
+	readBoard("impossible.txt", c);
 	printBoard(c);
-	pos* locations = getEmpty(c);
-	pos *loc = locations;
-	while (locations)
-	{
-		printf("%d %d\n", (*loc).x, (*loc).y);
-		if (loc->last)
-			break;
-		loc++;
-		
-	}
-	//printf("%d\n", squares(c));
+	//printf("legal: %d\n", legal(c));
+
+	printf("solve: %d\n", solve(c));
+	printBoard(c);
+	//printf("legal: %d\n", legal(c));
+	printf("cnt: %d\n", cnt);
 }
